@@ -3,13 +3,13 @@ A molecule is given and we return the boxes made to maximize the smaller box in 
 
 Pseuducode:
 
-1. Read molecules information and set box walls.
+1) Read molecules information and set box walls.
 
-2. Find all permutations possible with n concatenations between xyz, xzy, yxz, yzx, zxy, and zyx.
+2) Find all permutations possible with n concatenations between xyz, xzy, yxz, yzx, zxy, and zyx.
 
-3. Use every permutation, one by one, to cut the molecule.
+3) Use every permutation, one by one, to cut the molecule.
 
-a) IF a box have one atom, THEN go back (you are done)
+  a) IF a box have one atom, THEN go back (you are done)
 
   b) ELSE
   
