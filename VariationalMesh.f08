@@ -83,6 +83,7 @@ SUBROUTINE VariationalMesh
     CALL cuts_with_best_permutation(R, best_n_permutation)
   END BLOCK make_best_cuts
 
+  !Create cubes from boxes
   make_cubes: BLOCK
     TYPE(elements) :: cubes(SIZE(R))
     TYPE(elements) :: emptyBox(SIZE(R)*5)
