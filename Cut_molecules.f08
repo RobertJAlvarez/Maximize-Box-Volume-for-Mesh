@@ -8,41 +8,43 @@ MODULE cut_molecule
 
     CONTAINS
 
+    !
     SUBROUTINE find_best_permutation(all_elements, n, best_overall_volume, best_overall_permutation)
         IMPLICIT NONE
-        CLASS(elements), INTENT(INOUT) :: all_elements(:)
-        INTEGER, INTENT(IN) :: n
-        REAL*8, INTENT(INOUT) :: best_overall_volume
-        CHARACTER(*), INTENT(INOUT) :: best_overall_permutation
+        CLASS(elements), INTENT(INOUT) :: all_elements(:)           ! Array with all elements inside of the box
+        INTEGER, INTENT(IN) :: n                                    ! Number of concatenations
+        REAL*8, INTENT(INOUT) :: best_overall_volume                ! Store largest volume 
+        CHARACTER(*), INTENT(INOUT) :: best_overall_permutation     ! Permutation that makes the largest volume
 
-        CHARACTER(3*n) :: temp_String, concatenations(6**n)
-        INTEGER, ALLOCATABLE :: depth_permutations(:)
-        REAL*8 :: temp_volume, volumes(SIZE(all_elements))
+        CHARACTER(3*n) :: curr_perm, concatenations(6**n)           ! Temporarily save a concatenation // Save all different possible concatenations
+        INTEGER, ALLOCATABLE :: depth_permutations(:)               ! Parameter for find_all_permutations
+        REAL*8 :: temp_volume, volumes(SIZE(all_elements))          ! Temporarily save a volume // Save all volumes
         INTEGER :: i, j
 
         ALLOCATE(depth_permutations(n))
 
         i=1
-        CALL find_all_permutations(concatenations, 1, depth_permutations, i)
+        CALL find_all_permutations(concatenations, 1, depth_permutations, i)    ! Generate all possible concatenations
 
         DEALLOCATE (depth_permutations)
 
+        ! Try all concatenations and get the best one
         DO i=1, SIZE(concatenations)
-            temp_String = concatenations(i)     !Make a copy of the concatenation
+            curr_perm = concatenations(i)       !Make a copy of the concatenation
 
-            !Heap sort may be better for sorting with respect to element # because elements are partially sorted
+            ! Heap sort may be better for sorting with respect to element # because elements are partially sorted
             CALL merge_sort(all_elements, 'x')  !Merge in ascending order with respect to x
             CALL merge_sort(all_elements, 'n')  !Merge in ascending order with respect to the element number
 
             j=0
-            CALL this_permutation(all_elements, temp_String, j)    !Do all of the cuts
+            CALL this_permutation(all_elements, curr_perm, j)    ! Perform all of the cuts
 
             !Calculate all boxes volumes
             DO j=1, SIZE(volumes)
                 volumes(j) = all_elements(j)%calculate_volume()
             END DO
 
-            !Rest atoms walls
+            !Reset atoms walls
             DO j=1, SIZE(all_elements)
                 CALL all_elements(j)%reset_walls()
             END DO
@@ -50,23 +52,22 @@ MODULE cut_molecule
             ! Get the smallest volume
             temp_volume = MINVAL(volumes)
 
-            !If the smallest volume of String is bigger than the previous smallest-biggest volume
+            !If the smallest volume make by curr_perm is bigger than the previous smallest-biggest volume
             IF (temp_volume - best_overall_volume > 0.00001) THEN
-                best_overall_volume = temp_volume
-                best_overall_permutation = concatenations(i)
+                best_overall_volume = temp_volume               ! Save new smallest-biggest volume
+                best_overall_permutation = concatenations(i)    ! Save permutation take makes best_overall_volume
             END IF
         END DO
     END SUBROUTINE find_best_permutation
 
     RECURSIVE SUBROUTINE find_all_permutations(all_conc, loop_n, depth, array_location)
         IMPLICIT NONE
-        CHARACTER(*), INTENT(INOUT) :: all_conc(:)
-        INTEGER, INTENT(IN) :: loop_n
-        INTEGER, INTENT(INOUT) :: depth(:)
-        INTEGER, INTENT(INOUT) :: array_location
+        CHARACTER(*), INTENT(INOUT) :: all_conc(:)  ! 
+        INTEGER, INTENT(IN) :: loop_n               ! 
+        INTEGER, INTENT(INOUT) :: depth(:)          ! 
+        INTEGER, INTENT(INOUT) :: array_location    ! 
 
         CHARACTER(3) :: base_permutations(6) = ['xyz', 'xzy', 'yxz', 'yzx', 'zxy', 'zyx']
-
         INTEGER :: i
 
         IF (loop_n < SIZE(depth)) THEN  !For every depth column except the last one...
