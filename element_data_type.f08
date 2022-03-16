@@ -1,196 +1,179 @@
+! Programmed by Robert Alvarez
+! Last modified: March 15th 2022
+!
+! Creation of a class called elements to save an atom atribute and methods
 MODULE element_data_type
+  IMPLICIT NONE
+
+  PRIVATE
+  PUBLIC :: elements, ASSIGNMENT(=), calc_distance, calc_location, makeCube
+
+  REAL*8, PARAMETER :: PI = 4.D0*DATAN(1.D0)    !*8 is hardcoded, use SELECTED_REAL_KIND() instead
+
+  TYPE :: elements
+    PRIVATE ! Make atributes inaccessible outside of this module
+
+    INTEGER :: element  ! Proton #
+    REAL*8 :: x, y, z   ! Atom 3D location
+    REAL :: radius      ! Atomic radius in radii units
+    REAL*8 :: x_low_wall, x_high_wall   ! Walls, in the x-coordinate, of box containing the atom
+    REAL*8 :: y_low_wall, y_high_wall   ! Walls, in the y-coordinate, of box containing the atom
+    REAL*8 :: z_low_wall, z_high_wall   ! Walls, in the z-coordinate, of box containing the atom
+  CONTAINS
+    GENERIC :: set_molecule => set_molecule_integer, set_molecule_character ! Let the program decide for us which one to use base in the parameters
+    PROCEDURE, PRIVATE, PASS :: set_molecule_integer        ! Set molecule information when an integer is pass for the number of atoms
+    PROCEDURE, PRIVATE, PASS :: set_molecule_character      ! Set molecule information when an character is pass for the type of atoms
+    PROCEDURE, PASS :: set_radius           ! Set the radius of the atom
+    PROCEDURE, PASS :: set_walls            ! Update the atom walls
+    PROCEDURE, PASS :: reset_walls          ! Set the walls to its maximum length
+    PROCEDURE, PASS :: less_equal_than      ! Compare two atoms base in a coordinate
+    PROCEDURE, PASS :: calculate_volume     ! Calculate volume made by the walls
+    PROCEDURE, PASS :: print_info           ! Print atom information: element, location, and walls
+    PROCEDURE, PASS :: makeCube             ! Convert the box into a cube
+  END TYPE elements
+
+  ! Extend the meaining of '=' to work with the elements derived data type
+  INTERFACE ASSIGNMENT (=)
+    MODULE PROCEDURE copy_array
+  END INTERFACE
+
+  CONTAINS
+
+  ! Set element type and x, y, and z position. Element type is pass as an integer representing the number of protons
+  SUBROUTINE set_molecule_integer(this, ele_pass, x_pass, y_pass, z_pass)
     IMPLICIT NONE
+    CLASS(elements), INTENT(INOUT) :: this
+    INTEGER, INTENT(IN) :: ele_pass
+    REAL*8, INTENT(IN) :: x_pass, y_pass, z_pass
 
-    PRIVATE
-    PUBLIC :: elements, ASSIGNMENT(=), calc_distance, calc_location, makeCube
+    this%element = ele_pass
+    this%x = x_pass
+    this%y = y_pass
+    this%z = z_pass
+  END SUBROUTINE set_molecule_integer
 
-    REAL*8, PARAMETER :: PI = 4.D0*DATAN(1.D0)    !*8 is hardcoded, use SELECTED_REAL_KIND() instead
+  ! Set element type and x, y, and z position. Element type is pass as a character representing the abbreviation use on the periodic table
+  SUBROUTINE set_molecule_character(this, ele_pass, x_pass, y_pass, z_pass)
+    IMPLICIT NONE
+    CLASS(elements), INTENT(INOUT) :: this
+    CHARACTER(*), INTENT(IN) :: ele_pass
+    REAL*8, INTENT(IN) :: x_pass, y_pass, z_pass
 
-    TYPE :: elements
-        PRIVATE
+    this%element = get_element(TRIM(ele_pass))  ! Find the number of protons that the character represent base on the periodic table
+    this%x = x_pass
+    this%y = y_pass
+    this%z = z_pass
 
-        INTEGER :: element  !Proton #
-        REAL*8 :: x, y, z   !Atom 3D location
-        REAL :: radius      !Atomic radius
-        REAL*8 :: x_low_wall, x_high_wall
-        REAL*8 :: y_low_wall, y_high_wall
-        REAL*8 :: z_low_wall, z_high_wall
-    CONTAINS
-        GENERIC :: set_molecule => set_molecule_integer, set_molecule_character
-        PROCEDURE, PRIVATE, PASS :: set_molecule_integer
-        PROCEDURE, PRIVATE, PASS :: set_molecule_character
-        PROCEDURE, PASS :: set_radius
-        PROCEDURE, PASS :: set_walls
-        PROCEDURE, PASS :: reset_walls
-        PROCEDURE, PASS :: less_equal_than
-        PROCEDURE, PASS :: calculate_volume
-        PROCEDURE, PASS :: print_info
-        PROCEDURE, PASS :: makeCube
-    END TYPE elements
+    ! Check is character does represent an element in the periodic table
+    IF (this%element == -1) WRITE(*,*) 'Element read from file does not exist'
+  END SUBROUTINE set_molecule_character
 
-    INTERFACE ASSIGNMENT (=)
-        MODULE PROCEDURE copy_array
-    END INTERFACE
+  ! Use element type to set its radii
+  SUBROUTINE set_radius(this)
+    IMPLICIT NONE
+    CLASS(elements), INTENT(INOUT) :: this
+    REAL :: all_radius(85)
+    INTEGER :: i
 
-    CONTAINS
+    all_radius = [0.53, 0.31, 1.67, 1.12, 0.87, 0.67, 0.56, 0.48, 0.42, 0.38, 1.90, 1.45, 1.18, 1.11, 0.98, &
+    0.88, 0.79, 0.71, 2.43, 1.94, 1.84, 1.76, 1.71, 1.66, 1.61, 1.56, 1.52, 1.49, 1.45, 1.42, 1.36, 1.25, 1.14, &
+    1.03, 0.94, 0.88, 2.65, 2.19, 2.12, 2.06, 1.98, 1.90, 1.83, 1.78, 1.73, 1.69, 1.65, 1.55, 1.56, 1.45, 1.33, &
+    1.23, 1.15, 1.08, 2.98, 2.53, 2.26, 2.10, 2.47, 2.06, 2.05, 2.38, 2.31, 2.33, 2.25, 2.28, 2.26, 2.26, 2.22, &
+    2.22, 2.17, 2.08, 2.00, 1.93, 1.88, 1.85, 1.80, 1.77, 1.74, 1.71, 1.56, 1.54, 1.43, 1.35, 1.27]
 
-    SUBROUTINE set_molecule_integer(this, ele_pass, x_pass, y_pass, z_pass)
-        IMPLICIT NONE
-        CLASS(elements), INTENT(INOUT) :: this
-        INTEGER, INTENT(IN) :: ele_pass
-        REAL*8, INTENT(IN) :: x_pass, y_pass, z_pass
+    this%radius = all_radius(this%element)
+  END SUBROUTINE set_radius
 
-        this%element = ele_pass
-        this%x = x_pass
-        this%y = y_pass
-        this%z = z_pass
-    END SUBROUTINE set_molecule_integer
+  ! Update wall values base in the coordinate and location of the cut
+  SUBROUTINE set_walls(this, coordinate, location)
+    IMPLICIT NONE
+    CLASS(elements), INTENT(INOUT) :: this  ! Element in consideration
+    CHARACTER, INTENT(IN) :: coordinate     ! Coordinate to update walls
+    REAL*8, INTENT(IN) :: location          ! Location of the cut
 
-    SUBROUTINE set_molecule_character(this, ele_pass, x_pass, y_pass, z_pass)
-        IMPLICIT NONE
-        CLASS(elements), INTENT(INOUT) :: this
-        CHARACTER(*), INTENT(IN) :: ele_pass
-        REAL*8, INTENT(IN) :: x_pass, y_pass, z_pass
-
-        this%element = get_element(TRIM(ele_pass))
-        this%x = x_pass
-        this%y = y_pass
-        this%z = z_pass
-
-        IF (this%element == -1) THEN
-            WRITE(*,*) 'Element read from file does not exist'
+    SELECT CASE(coordinate)
+      CASE ('x')  ! Cut was perform in the x-coordinate
+        IF (this%x > location) THEN                     ! If cut was between the left wall and the atom location
+          this%x_low_wall = location
+        ELSE                                            ! If cut was between the right wall and the atom location
+          this%x_high_wall = location
         END IF
-    END SUBROUTINE set_molecule_character
+      CASE('y')   ! Cut was perform in the y-coordinate
+        IF (this%y > location) THEN                     ! If cut was between the left wall and the atom location
+          this%y_low_wall = location
+        ELSE                                            ! If cut was between the right wall and the atom location
+          this%y_high_wall = location
+        END IF
+      CASE('z')   ! Cut was perform in the z-coordinate
+        IF (this%z > location) THEN                     ! If cut was between the left wall and the atom location
+          this%z_low_wall = location
+        ELSE                                            ! If cut was between the right wall and the atom location
+          this%z_high_wall = location
+        END IF
+    END SELECT
+  END SUBROUTINE set_walls
 
-    SUBROUTINE set_radius(this)
-        IMPLICIT NONE
-        CLASS(elements), INTENT(INOUT) :: this
-        REAL :: all_radius(85)
-        INTEGER :: i
-! 0.529
-!            all_radius = [1.000, 1.400, 1.520, 1.113, 0.795, 1.700, 1.500, 1.400, 1.400, 1.500, 1.858, 1.599, 1.432 ,1.176, &
-!            1.105, 1.800, 1.800, 1.800, 2.272, 1.974, 1.606, 1.448, 1.311, 1.249, 1.367, 1.241, 1.253, 1.246, 1.278, 1.335, &
-!            1.221, 1.225, 1.245, 1.160, 2.000, 1.900, 2.475, 2.151, 1.776, 1.590, 1.429, 1.363, 1.352, 1.325, 1.345, 1.376, &
-!            1.445, 1.489, 1.626, 1.405, 1.450, 1.432, 2.200, 2.100, 2.655, 2.174, 1.870, 1.825, 1.820, 1.814, 1.630 ,1.620, &
-!            1.995, 1.787, 1.763, 1.752, 1.743, 1.734, 1.724, 1.940, 1.718, 1.564, 1.430, 1.370, 1.371, 1.338, 1.357, 1.371, &
-!            1.442, 1.503, 1.700, 1.750, 1.545, 1.673, 1.450, 2.300]
+  ! Set walls to the maximum range of possible interaction between the elements and the surrounding
+  SUBROUTINE reset_walls(ele_pass)
+    IMPLICIT NONE
+    CLASS(elements), INTENT(INOUT) :: ele_pass
 
-        all_radius = [0.53, 0.31, 1.67, 1.12, 0.87, 0.67, 0.56, 0.48, 0.42, 0.38, 1.90, 1.45, 1.18, 1.11, 0.98, &
-        0.88, 0.79, 0.71, 2.43, 1.94, 1.84, 1.76, 1.71, 1.66, 1.61, 1.56, 1.52, 1.49, 1.45, 1.42, 1.36, 1.25, 1.14, &
-        1.03, 0.94, 0.88, 2.65, 2.19, 2.12, 2.06, 1.98, 1.90, 1.83, 1.78, 1.73, 1.69, 1.65, 1.55, 1.56, 1.45, 1.33, &
-        1.23, 1.15, 1.08, 2.98, 2.53, 2.26, 2.10, 2.47, 2.06, 2.05, 2.38, 2.31, 2.33, 2.25, 2.28, 2.26, 2.26, 2.22, &
-        2.22, 2.17, 2.08, 2.00, 1.93, 1.88, 1.85, 1.80, 1.77, 1.74, 1.71, 1.56, 1.54, 1.43, 1.35, 1.27]
+    ele_pass%x_low_wall = -50.0
+    ele_pass%x_high_wall = 50.0
+    ele_pass%y_low_wall = -50.0
+    ele_pass%y_high_wall = 50.0
+    ele_pass%z_low_wall = -50.0
+    ele_pass%z_high_wall = 50.0
+  END SUBROUTINE reset_walls
 
-        this%radius = all_radius(this%element)
-    END SUBROUTINE set_radius
+  ! Check if the coordinate possition of 'this' is greater or not compare to the coordinate possition of 'another_element'
+  PURE LOGICAL FUNCTION less_equal_than(this, another_element, coordinate)
+    IMPLICIT NONE
+    CLASS(elements), INTENT(IN) :: this, another_element    ! Element pass, and element to campare with
+    CHARACTER, INTENT(IN) :: coordinate                     ! Coordinate axis of reference
 
-    SUBROUTINE set_walls(this, coordinate, location)
-        IMPLICIT NONE
-        CLASS(elements), INTENT(INOUT) :: this
-        CHARACTER, INTENT(IN) :: coordinate
-        REAL*8, INTENT(IN) :: location
+    less_equal_than = .FALSE.
 
-        SELECT CASE(coordinate)
-            CASE ('x')
-                IF (this%x > location) THEN
-                    IF (this%x_low_wall < location) THEN
-                        this%x_low_wall = location
-                    END IF
-                ELSE
-                    IF (this%x_high_wall > location) THEN
-                        this%x_high_wall = location
-                    END IF
-                END IF
-            CASE('y')
-                IF (this%y > location) THEN
-                    IF (this%y_low_wall < location) THEN
-                        this%y_low_wall = location
-                    END IF
-                ELSE
-                    IF (this%y_high_wall > location) THEN
-                        this%y_high_wall = location
-                    END IF
-                END IF
-            CASE('z')
-                IF (this%z > location) THEN
-                    IF (this%z_low_wall < location) THEN
-                        this%z_low_wall = location
-                    END IF
-                ELSE
-                    IF (this%z_high_wall > location) THEN
-                        this%z_high_wall = location
-                    END IF
-                END IF
-        END SELECT
-    END SUBROUTINE set_walls
+    SELECT CASE(coordinate)
+      CASE('x')   ! When sorting with respect to x
+        IF (this%x <= another_element%x) less_equal_than = .TRUE.
+      CASE('y')   ! with respect to y
+        IF (this%y <= another_element%y) less_equal_than = .TRUE.
+      CASE('z')   ! with respect to z
+        IF (this%z <= another_element%z) less_equal_than = .TRUE.
+      CASE DEFAULT    ! with respect to the element number
+        IF (this%element <= another_element%element) less_equal_than = .TRUE.
+    END SELECT
+  END FUNCTION less_equal_than
 
-    SUBROUTINE reset_walls(ele_pass)
-        IMPLICIT NONE
-        CLASS(elements), INTENT(INOUT) :: ele_pass
+  ! Calculate the volume inside of the box generated by the walls of the element
+  PURE REAL*8 FUNCTION calculate_volume(this)
+    IMPLICIT NONE
+    CLASS(elements), INTENT(IN) :: this ! Element in consideration
 
-        ele_pass%x_low_wall = -50.0
-        ele_pass%x_high_wall = 50.0
-        ele_pass%y_low_wall = -50.0
-        ele_pass%y_high_wall = 50.0
-        ele_pass%z_low_wall = -50.0
-        ele_pass%z_high_wall = 50.0
-    END SUBROUTINE reset_walls
+    calculate_volume = (this%x_high_wall - this%x_low_wall) * (this%y_high_wall - this%y_low_wall)
+    calculate_volume = calculate_volume *  (this%z_high_wall - this%z_low_wall)
+  END FUNCTION calculate_volume
 
-    PURE LOGICAL FUNCTION less_equal_than(this, another_element, coordinate)
-        IMPLICIT NONE
-        CLASS(elements), INTENT(IN) :: this, another_element
-        CHARACTER, INTENT(IN) :: coordinate
-
-        less_equal_than = .FALSE.
-
-        SELECT CASE(coordinate)
-            CASE('x')                                    !When sorting with respect to x
-                IF (this%x <= another_element%x) THEN
-                    less_equal_than = .TRUE.
-                END IF
-            CASE('y')                                    !with respect to y
-                IF (this%y <= another_element%y) THEN
-                    less_equal_than = .TRUE.
-                END IF
-            CASE('z')                                    !with respect to z
-                IF (this%z <= another_element%z) THEN
-                    less_equal_than = .TRUE.
-                END IF
-            CASE DEFAULT
-                IF (this%element <= another_element%element) THEN
-                    less_equal_than = .TRUE.
-                END IF
-        END SELECT
-    END FUNCTION less_equal_than
-
-    PURE REAL*8 FUNCTION calculate_volume(this)
-        IMPLICIT NONE
-        CLASS(elements), INTENT(IN) :: this
-        REAL*8 :: volume
-
-        volume = 1.0D0 * (this%x_high_wall - this%x_low_wall)
-        volume = volume * (this%y_high_wall - this%y_low_wall)
-        volume = volume * (this%z_high_wall - this%z_low_wall)
-
-        calculate_volume = ABS(volume)! - (4.0 * PI * this%radius**3)/3.0
-    END FUNCTION calculate_volume
-
+    ! Calculate the distance between the surfaces of two atoms
     PURE REAL*8 FUNCTION calc_distance(high_ele, low_ele, coordinate)
         IMPLICIT NONE
-        CLASS(elements), INTENT(IN) :: high_ele, low_ele
-        CHARACTER, INTENT(IN) :: coordinate
+        CLASS(elements), INTENT(IN) :: high_ele, low_ele    ! two elements
+        CHARACTER, INTENT(IN) :: coordinate   ! Coordinate of consideration
 
+        ! Calculate distance from the center of the atoms
         SELECT CASE(coordinate)
-            CASE('x')
+            CASE('x')     ! in the x-coordinate
                 calc_distance = high_ele%x - low_ele%x
-            CASE('y')
+            CASE('y')     ! in the y-coordinate
                 calc_distance = high_ele%y - low_ele%y
-            CASE('z')
+            CASE('z')     ! in the z-coordinate
                 calc_distance = high_ele%z - low_ele%z
         END SELECT
-        calc_distance = calc_distance - high_ele%radius - low_ele%radius
+        calc_distance = calc_distance - high_ele%radius - low_ele%radius  ! Subtract the radius to get the distance from the surfaces of the atoms
     END FUNCTION calc_distance
 
+    ! 
     PURE REAL*8 FUNCTION calc_location(high_ele, low_ele, coordinate)
         IMPLICIT NONE
         CLASS(elements), INTENT(IN) :: high_ele, low_ele
