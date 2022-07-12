@@ -1,25 +1,25 @@
 SUBROUTINE VariationalMesh
-	USE element_data_type, ONLY: elements, makeCube
-	USE cut_molecule, ONLY: find_best_permutation, cuts_with_best_permutation
-	IMPLICIT NONE
+  USE element_data_type, ONLY: DBL, elements, makeCube
+  USE cut_molecule, ONLY: find_best_permutation, cuts_with_best_permutation
+  IMPLICIT NONE
 
-	!Declare file variables
-	CHARACTER(len=80) :: msg
-	INTEGER :: IOStatus
+  !Declare file variables
+  CHARACTER(len=80) :: msg
+  INTEGER :: IOStatus
 
-	!Declare program variables
-	TYPE(elements), ALLOCATABLE :: R(:)     !"allocatable" is use when size is not known before the program runs.
-	INTEGER :: nAtoms, i, arrayStatus
+  !Declare program variables
+  TYPE(elements), ALLOCATABLE :: R(:)     !"allocatable" is use when size is not known before the program runs.
+  INTEGER :: nAtoms, i, arrayStatus
 
-	!Open file and catch any error that may happen
-	OPEN (UNIT=3, FILE='XMOL.DAT', STATUS='OLD', ACTION='READ', IOSTAT=IOStatus, IOMSG=msg)
+  !Open file and catch any error that may happen
+  OPEN (UNIT=3, FILE='XMOL.DAT', STATUS='OLD', ACTION='READ', IOSTAT=IOStatus, IOMSG=msg)
 
   !Read file and save data
-	IF (IOStatus == 0) THEN             !If file successfully open
-		READ(3,*,IOSTAT=IOStatus) nAtoms
-		READ(3,*,IOSTAT=IOStatus)
+  IF (IOStatus == 0) THEN             !If file successfully open
+    READ(3,*,IOSTAT=IOStatus) nAtoms
+    READ(3,*,IOSTAT=IOStatus)
 
-		ALLOCATE(R(nAtoms), STAT=arrayStatus, ERRMSG=msg)   !Initialize arrays size
+    ALLOCATE(R(nAtoms), STAT=arrayStatus, ERRMSG=msg)   !Initialize arrays size
 
     IF (arrayStatus /= 0) THEN
       WRITE(*,1020) arrayStatus
@@ -33,7 +33,7 @@ SUBROUTINE VariationalMesh
         CHARACTER(100) :: line_info
         CHARACTER(4) :: char_element = ''
         INTEGER :: int_element
-        REAL*8 :: x, y, z
+        REAL(DBL) :: x, y, z
 
         READ(3,*,IOSTAT=IOStatus) int_element, x, y, z
 
@@ -55,25 +55,25 @@ SUBROUTINE VariationalMesh
       CALL R(i)%set_radius()
       CALL R(i)%reset_walls()
     END DO
-	ELSE
-		WRITE (*,1030) IOStatus
-		1030 FORMAT ('Error opening file: IOSTAT = ', I6)
-		WRITE (*,*) TRIM(msg)
-		STOP
-	END IF
+  ELSE
+    WRITE (*,1030) IOStatus
+    1030 FORMAT ('Error opening file: IOSTAT = ', I6)
+    WRITE (*,*) TRIM(msg)
+    STOP
+  END IF
 
-	CLOSE(3)
+  CLOSE(3)
 
   make_best_cuts: BLOCK
     INTEGER, PARAMETER :: max_n = 5             !"n" stands for the number of concatenations
     CHARACTER(max_n*3) :: best_n_permutation
     INTEGER :: n_concatenations
-    REAL*8 :: best_n_volume
+    REAL(DBL) :: best_n_volume
 
     best_n_volume = -HUGE(best_n_volume)
 
     !Find permutation with the best cuts
-    DO n_concatenations = max_n/2, max_n
+    DO n_concatenations = int(max_n/2.0), max_n
       CALL find_best_permutation(R, n_concatenations, best_n_volume, best_n_permutation)
     END DO
 
@@ -121,9 +121,9 @@ SUBROUTINE VariationalMesh
     END DO
   ELSE
     WRITE (*,1050) IOStatus
-		1050 FORMAT ('Error creating/writing on BoxInfoOutput.DAT: IOSTAT = ', I6)
-		WRITE (*,*) TRIM(msg)
-		STOP
+    1050 FORMAT ('Error creating/writing on BoxInfoOutput.DAT: IOSTAT = ', I6)
+    WRITE (*,*) TRIM(msg)
+    STOP
   END IF
 
   CLOSE(4)
