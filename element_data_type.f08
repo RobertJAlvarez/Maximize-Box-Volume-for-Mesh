@@ -1,8 +1,8 @@
 ! Programmed by Robert Alvarez
 ! Last modified: March 26th 2022
 !
-! Creation of a class called elements to save an atom atributes (like elements number, radius, and walls to create a box)
-! and methods (like calculating distance between elements, positoin for cuts, copy element walls, etc)
+! Creation of a class called elements to save an atom attributes (like elements number, radius, and walls to create a box)
+! and methods (like calculating distance between elements, position for cuts, copy element walls, etc)
 MODULE element_data_type
   IMPLICIT NONE
 
@@ -13,7 +13,7 @@ MODULE element_data_type
   REAL(DBL), PARAMETER :: PI = 4.D0*DATAN(1.D0)
 
   TYPE :: elements
-    PRIVATE ! Make atributes inaccessible outside of this module
+    PRIVATE ! Make attributes inaccessible outside of this module
 
     INTEGER :: element    ! Proton #
     REAL(DBL) :: x, y, z  ! Atom 3D location
@@ -34,7 +34,7 @@ MODULE element_data_type
     PROCEDURE, PASS :: makeCube             ! Convert the box into a cube
   END TYPE elements
 
-  ! Extend the meaining of '=' to work with the elements derived data type
+  ! Extend the meaning of '=' to work with the elements derived data type
   INTERFACE ASSIGNMENT (=)
     MODULE PROCEDURE copy_array
   END INTERFACE
@@ -127,10 +127,10 @@ MODULE element_data_type
     ele_pass%z_high_wall = 50.0
   END SUBROUTINE reset_walls
 
-  ! Check if the coordinate possition of 'this' is greater or not compare to the coordinate possition of 'another_element'
+  ! Check if the coordinate position of 'this' is greater or not compare to the coordinate position of 'another_element'
   PURE LOGICAL FUNCTION less_equal_than(this, another_element, coordinate)
     IMPLICIT NONE
-    CLASS(elements), INTENT(IN) :: this, another_element    ! Element pass, and element to campare with
+    CLASS(elements), INTENT(IN) :: this, another_element    ! Element pass, and element to compare with
     CHARACTER, INTENT(IN) :: coordinate                     ! Coordinate axis of reference
 
     less_equal_than = .FALSE.
@@ -166,11 +166,11 @@ MODULE element_data_type
 
     ! Calculate distance from the center of the atoms
     SELECT CASE(coordinate)
-    CASE('x')     ! in the x-coordinate
+    CASE('x')
       calc_distance = high_ele%x - low_ele%x
-    CASE('y')     ! in the y-coordinate
+    CASE('y')
       calc_distance = high_ele%y - low_ele%y
-    CASE('z')     ! in the z-coordinate
+    CASE('z')
       calc_distance = high_ele%z - low_ele%z
     END SELECT
     calc_distance = calc_distance - high_ele%radius - low_ele%radius  ! Subtract the radius to get the distance from the surfaces of the atoms
@@ -280,12 +280,13 @@ MODULE element_data_type
 
     REAL(DBL) :: Lx, Rx, Ly, Ry, Lz, Rz, shortestD, cutAt
 
-    Rx = this%x_high_wall - this%x  ! Distance between right wall in x and the x position
-    Lx = this%x - this%x_low_wall   ! Distance between left wall in x and the x position
-    Ry = this%y_high_wall - this%y  ! Distance between right wall in y and the y position
-    Ly = this%y - this%y_low_wall   ! Distance between left wall in y and the y position
-    Rz = this%z_high_wall - this%z  ! Distance between right wall in z and the z position
-    Lz = this%z - this%z_low_wall   ! Distance between left wall in z and the z position
+    !Calculate distance between right/left wall in the n and the n position
+    Rx = this%x_high_wall - this%x
+    Lx = this%x - this%x_low_wall
+    Ry = this%y_high_wall - this%y
+    Ly = this%y - this%y_low_wall
+    Rz = this%z_high_wall - this%z
+    Lz = this%z - this%z_low_wall
 
     shortestD = MIN(Rx, Lx, Ry, Ly, Rz, Lz) ! Get shortest distance between all 6 previous calculations
 
