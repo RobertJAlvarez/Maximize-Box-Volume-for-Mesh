@@ -17,7 +17,7 @@ MODULE element_data_type
 
     INTEGER :: element    ! Proton #
     REAL(DBL) :: x, y, z  ! Atom 3D location
-    REAL :: radius        ! Atomic radius in radii units
+    REAL(DBL) :: radius        ! Atomic radius in radii units
     REAL(DBL) :: x_low_wall, x_high_wall   ! Walls, in the x-coordinate, of box containing the atom
     REAL(DBL) :: y_low_wall, y_high_wall   ! Walls, in the y-coordinate, of box containing the atom
     REAL(DBL) :: z_low_wall, z_high_wall   ! Walls, in the z-coordinate, of box containing the atom
@@ -119,12 +119,12 @@ MODULE element_data_type
     IMPLICIT NONE
     CLASS(elements), INTENT(INOUT) :: ele_pass
 
-    ele_pass%x_low_wall = -50.0
-    ele_pass%x_high_wall = 50.0
-    ele_pass%y_low_wall = -50.0
-    ele_pass%y_high_wall = 50.0
-    ele_pass%z_low_wall = -50.0
-    ele_pass%z_high_wall = 50.0
+    ele_pass%x_low_wall = -5.D1
+    ele_pass%x_high_wall = 5.D1
+    ele_pass%y_low_wall = -5.D1
+    ele_pass%y_high_wall = 5.D1
+    ele_pass%z_low_wall = -5.D1
+    ele_pass%z_high_wall = 5.D1
   END SUBROUTINE reset_walls
 
   ! Check if the coordinate position of 'this' is greater or not compare to the coordinate position of 'another_element'

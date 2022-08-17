@@ -57,7 +57,7 @@ MODULE cut_molecule
       temp_volume = MINVAL(volumes)
 
       !If the smallest volume make by curr_perm is bigger than the previous smallest-biggest volume
-      IF (temp_volume - best_overall_volume > 0.00001) THEN
+      IF (temp_volume - best_overall_volume > 1.D-5) THEN
         best_overall_volume = temp_volume               ! Save new smallest-biggest volume
         best_overall_permutation = concatenations(i)    ! Save permutation take makes best_overall_volume
       END IF
@@ -215,11 +215,11 @@ MODULE cut_molecule
     END DO
 
     ! Save atom positions in best_location if a good cut is found or if make_cut is passed
-    IF (largest_distance > -0.8 .OR. PRESENT(make_cut)) THEN        ! largest_distance > -0.8 is to avoid to cut a molecule in half
+    IF (largest_distance > -0.8D0 .OR. PRESENT(make_cut)) THEN        ! largest_distance > -0.8 is to avoid to cut a molecule in half
       ! Look for symmetry, if any, to save multiple indixes
       n=0
       DO i=1, SIZE(distances)
-        IF (largest_distance - distances(i) <= 0.0001) THEN     ! Consideration of symmetry
+        IF (largest_distance - distances(i) <= 1.D-4) THEN     ! Consideration of symmetry
           n = n+1
           temp_best_location(n) = i
         END IF

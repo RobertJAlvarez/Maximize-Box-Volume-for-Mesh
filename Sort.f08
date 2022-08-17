@@ -15,49 +15,47 @@ MODULE sort
     IMPLICIT NONE
     CLASS(elements), INTENT(INOUT) :: a(:)
     CHARACTER, INTENT(IN) :: coordinate
-    INTEGER :: low, high, mid
+    INTEGER :: high, mid
 
-    low = LBOUND(a,1)   ! Number of the first index of array a
     high = UBOUND(a,1)  ! Number of the last index of array a
 
-    IF (low < high) THEN
-      mid = low + (high - low)/2
-      CALL merge_sort(a(low:mid), coordinate)
-      CALL merge_sort(a(mid+1:high), coordinate)
-      a(low:high) = my_merge(a(low:mid), a(mid+1:high), coordinate)
+    IF (1 < high) THEN
+      mid = (high + 1)/2
+      CALL merge_sort(a(:mid), coordinate)
+      CALL merge_sort(a(mid+1:), coordinate)
+      a(:) = my_merge(a(:mid), a(mid+1:), coordinate)
     END IF
   END SUBROUTINE merge_sort
 
   FUNCTION my_merge(a, b, coordinate)
     IMPLICIT NONE
-    CLASS(elements), DIMENSION(:), INTENT(INOUT) :: a, b  ! Pass pair of arrays
-    TYPE(elements), DIMENSION(SIZE(a)+SIZE(b)) :: my_merge   ! Sorted combination of the elements in arrays a and b
-    CHARACTER, INTENT(IN) :: coordinate                   ! Coordinate use as reference to sort elements
-    INTEGER a_ptr, a_high
-    INTEGER b_ptr, b_high
-    INTEGER c_ptr
+    CLASS(elements), DIMENSION(:), INTENT(IN) :: a, b  ! Pass pair of arrays
+    CHARACTER, INTENT(IN) :: coordinate                ! Coordinate use as reference to sort elements
 
-    a_ptr = LBOUND(a,1)   ! Number of the first index of array a
+    TYPE(elements) :: my_merge(SIZE(a)+SIZE(b))   ! Sorted combination of the elements in arrays a and b
+    INTEGER :: ai, a_high, bi, b_high, ci
+
+    ai = 1
     a_high = UBOUND(a,1)  ! Number of the last index of array a
-    b_ptr = LBOUND(b,1)   ! Number of the first index of array b
+    bi = 1
     b_high = UBOUND(b,1)  ! Number of the last index of array b
-    c_ptr = 1
+    ci = 1
 
-    DO WHILE (a_ptr <= a_high .AND. b_ptr <= b_high)
-      IF ( a(a_ptr)%less_equal_than(b(b_ptr), coordinate) ) THEN  ! less_equal_than make a comparition base in the coordinate possition
-        my_merge(c_ptr) = a(a_ptr)
-        a_ptr = a_ptr + 1
+    DO WHILE (ai <= a_high .AND. bi <= b_high)
+      IF ( a(ai)%less_equal_than(b(bi), coordinate) ) THEN  ! less_equal_than make a comparison base in the coordinate position
+        my_merge(ci) = a(ai)
+        ai = ai + 1
       ELSE
-        my_merge(c_ptr) = b(b_ptr)
-        b_ptr = b_ptr + 1
+        my_merge(ci) = b(bi)
+        bi = bi + 1
       END IF
-      c_ptr = c_ptr + 1
+      ci = ci + 1
     END DO
 
-    IF (a_ptr > a_high) THEN
-      my_merge(c_ptr:) = b(b_ptr:b_high)
+    IF (ai > a_high) THEN
+      my_merge(ci:) = b(bi:)
     ELSE
-      my_merge(c_ptr:) = a(a_ptr:a_high)
+      my_merge(ci:) = a(ai:)
     END IF
   END FUNCTION my_merge
 END MODULE sort
