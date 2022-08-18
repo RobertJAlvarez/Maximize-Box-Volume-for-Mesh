@@ -150,7 +150,7 @@ MODULE cut_molecule
 
     ! For every index found to make a molecule the right most molecule, make a cut
     DO i=1, SIZE(cuts_locations)
-      cut_location = calc_location(elements_array(cuts_locations(i)+1), elements_array(cuts_locations(i)), coordinate)    ! Get coordinate value of the cut
+      cut_location = calc_location(elements_array(cuts_locations(i)+1), elements_array(cuts_locations(i)), coordinate)  ! Get coordinate value of the cut
 
       !Set walls and send new boxes to get more cuts
       IF (i+1 <= SIZE(cuts_locations)) THEN                                   ! More than one cut is left
@@ -159,7 +159,7 @@ MODULE cut_molecule
           DO j=1, cuts_locations(i+1)
             CALL elements_array(j)%set_walls(coordinate, cut_location)
           END DO
-          CALL this_permutation(elements_array(1:cuts_locations(i)), cut_seq, no_cut) ! Send the left most box to get more cuts
+          CALL this_permutation(elements_array(:cuts_locations(i)), cut_seq, no_cut) ! Send the left most box to get more cuts
         ELSE                                                                    ! Cut i when cut i+1 exist
           ! Update walls of the elements in the box i-1, i and i+1
           DO j=cuts_locations(i-1)+1, cuts_locations(i+1)
@@ -173,7 +173,7 @@ MODULE cut_molecule
           DO j=1, SIZE(elements_array)
             CALL elements_array(j)%set_walls(coordinate, cut_location)
           END DO
-          CALL this_permutation(elements_array(1:cuts_locations(i)), cut_seq, no_cut)     ! Send box 1 to get more cuts
+          CALL this_permutation(elements_array(:cuts_locations(i)), cut_seq, no_cut)     ! Send box 1 to get more cuts
           CALL this_permutation(elements_array(cuts_locations(i)+1:SIZE(elements_array)), cut_seq, no_cut)    ! Send box 2 to get more cuts
         ELSE                                                                    ! Last cut when cut i-1 exist
           ! Update walls of elements in the right most box

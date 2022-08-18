@@ -82,7 +82,8 @@ MODULE element_data_type
     1.23, 1.15, 1.08, 2.98, 2.53, 2.26, 2.10, 2.47, 2.06, 2.05, 2.38, 2.31, 2.33, 2.25, 2.28, 2.26, 2.26, 2.22, &
     2.22, 2.17, 2.08, 2.00, 1.93, 1.88, 1.85, 1.80, 1.77, 1.74, 1.71, 1.56, 1.54, 1.43, 1.35, 1.27]
 
-    this%radius = all_radius(this%element)
+    !this%radius = all_radius(this%element)
+    this%radius = DBLE(all_radius(this%element))
   END SUBROUTINE set_radius
 
   ! Update wall values base in the coordinate and location of the cut

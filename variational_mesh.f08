@@ -112,13 +112,13 @@ MODULE variational_mesh
         WRITE(*,*) TRIM(msg)
         STOP
       END IF
-  
-      R(1:SIZE(cubes)) = cubes
-      R(SIZE(cubes)+1:nBoxes) = emptyBox(1:nBoxes)
+
+      R(:SIZE(cubes)) = cubes
+      R(SIZE(cubes)+1:nBoxes) = emptyBox(:nBoxes)
     END BLOCK make_cubes
-  
+
     OPEN (UNIT=4, FILE='BoxInfoOutput.DAT', STATUS='REPLACE', ACTION='WRITE', IOSTAT=IOStatus, IOMSG=msg)
-  
+
     IF (IOStatus == 0) THEN
       !Print molecule information
       WRITE(4,*) nAtoms, SIZE(R)  !Number of boxes

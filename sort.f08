@@ -36,9 +36,9 @@ MODULE sort
     INTEGER :: ai, a_high, bi, b_high, ci
 
     ai = 1
-    a_high = UBOUND(a,1)  ! Number of the last index of array a
+    a_high = SIZE(a)  ! Number of the last index of array a
     bi = 1
-    b_high = UBOUND(b,1)  ! Number of the last index of array b
+    b_high = SIZE(b)  ! Number of the last index of array b
     ci = 1
 
     DO WHILE (ai <= a_high .AND. bi <= b_high)
