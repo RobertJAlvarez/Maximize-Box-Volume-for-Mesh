@@ -36,7 +36,7 @@ sort.mod: sort.f08 element_data_type.mod
 variational_mesh.mod: variational_mesh.f08 element_data_type.mod cut_molecule.mod
 
 element_data_type.o: element_data_type.f08
-cut_molecule.o: cut_molecule.f08 element_data_type.mod cut_molecule.f08 sort.mod
+cut_molecule.o: cut_molecule.f08 element_data_type.mod sort.mod
 sort.o: sort.f08 element_data_type.mod
 variational_mesh.o: variational_mesh.f08 element_data_type.mod cut_molecule.mod
 main.o: variational_mesh.mod
